@@ -1,0 +1,221 @@
+/* ==========================================================================
+   Mesa Charts — stylesheet
+   Everything the engine needs and nothing else. Drop it in, or copy the
+   tokens into your own and keep only the rules below them.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* --- surfaces & ink --------------------------------------------------- */
+  --mc-surface: #fcfcfb;              /* the card the chart sits on          */
+  --mc-ink:     #0b0b0b;              /* primary text                        */
+  --mc-ink-2:   #52514e;              /* secondary text, value labels        */
+  --mc-muted:   #898781;              /* axis labels, captions               */
+  --mc-grid:    #e1e0d9;              /* hairline gridlines                  */
+  --mc-axis:    #c3c2b7;              /* baseline, crosshair                 */
+  --mc-line:    rgba(11, 11, 11, .10);
+  --mc-line-2:  rgba(11, 11, 11, .16);
+  --mc-wash:    rgba(11, 11, 11, .04); /* empty half of a meter              */
+
+  /* --- categorical series ----------------------------------------------
+     Eight fixed steps, validated so every ADJACENT pair stays apart under
+     deuteranopia, protanopia and tritanopia (OKLab dE >= 8). Assign them in
+     order and never cycle: a series keeps its colour when a filter removes
+     its neighbour. A ninth series means "Other", small multiples, or a
+     second chart — not a generated hue.                                   */
+  --s1: #2a78d6;  /* blue    */
+  --s2: #eb6834;  /* orange  */
+  --s3: #1baf7a;  /* aqua    */
+  --s4: #eda100;  /* yellow  */
+  --s5: #e87ba4;  /* magenta */
+  --s6: #008300;  /* green   */
+  --s7: #4a3aa7;  /* violet  */
+  --s8: #e34948;  /* red     */
+
+  /* --- sequential: one hue, light to dark (heatmaps, choropleths) ------- */
+  --q1: #cde2fb; --q2: #b7d3f6; --q3: #9ec5f4; --q4: #86b6ef;
+  --q5: #5598e7; --q6: #2a78d6; --q7: #1c5cab; --q8: #104281;
+
+  /* --- status: reserved. Never reused as "series 9", and always shipped
+         with a label or an icon, never colour alone.                       */
+  --mc-good:     #006300;
+  --mc-critical: #d03b3b;
+
+  --mc-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Dark is its own set of values, not an inversion: the series hues are
+   re-picked against a dark surface so contrast and CVD separation survive. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --mc-surface: #1a1a19;
+    --mc-ink:     #ffffff;
+    --mc-ink-2:   #c3c2b7;
+    --mc-muted:   #898781;
+    --mc-grid:    #2c2c2a;
+    --mc-axis:    #383835;
+    --mc-line:    rgba(255, 255, 255, .10);
+    --mc-line-2:  rgba(255, 255, 255, .16);
+    --mc-wash:    rgba(255, 255, 255, .05);
+
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+
+    --q1: #104281; --q2: #1c5cab; --q3: #256abf; --q4: #2a78d6;
+    --q5: #3987e5; --q6: #5598e7; --q7: #86b6ef; --q8: #b7d3f6;
+
+    --mc-good: #0ca30c;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --mc-surface: #1a1a19;
+  --mc-ink:     #ffffff;
+  --mc-ink-2:   #c3c2b7;
+  --mc-muted:   #898781;
+  --mc-grid:    #2c2c2a;
+  --mc-axis:    #383835;
+  --mc-line:    rgba(255, 255, 255, .10);
+  --mc-line-2:  rgba(255, 255, 255, .16);
+  --mc-wash:    rgba(255, 255, 255, .05);
+
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+  --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+
+  --q1: #104281; --q2: #1c5cab; --q3: #256abf; --q4: #2a78d6;
+  --q5: #3987e5; --q6: #5598e7; --q7: #86b6ef; --q8: #b7d3f6;
+
+  --mc-good: #0ca30c;
+}
+
+/* ==========================================================================
+   SVG charts
+   ========================================================================== */
+
+.chart { width: 100%; display: block; overflow: visible; }
+.chart text { font-family: var(--mc-sans); }
+.chart .grid-line { stroke: var(--mc-grid); stroke-width: 1; }
+.chart .axis-line { stroke: var(--mc-axis); stroke-width: 1; }
+.chart .tick { fill: var(--mc-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.chart .tick-y { text-anchor: end; }
+.chart .tick-x { text-anchor: middle; }
+.chart .series-line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.chart .bar { rx: 4; }
+/* a 2px gap of the surface colour between stacked segments and between
+   neighbouring bars, so two similar colours never bleed into one shape */
+.chart .bar-seg { stroke: var(--mc-surface); stroke-width: 2; }
+.chart .dot { stroke: var(--mc-surface); stroke-width: 2; }
+.chart .crosshair { stroke: var(--mc-axis); stroke-width: 1; stroke-dasharray: 3 3; }
+/* the thread that carries the running total from one waterfall bar to the next */
+.chart .wf-link { stroke: var(--mc-axis); stroke-width: 1; stroke-dasharray: 2 3; }
+/* "today" on a timeline — the one line everything else is read against */
+.chart .tl-now { stroke: var(--mc-ink-2); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.chart .hit { fill: transparent; cursor: crosshair; }
+.chart .value-label { fill: var(--mc-ink-2); font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+/* latest value printed at the end of a line — carries the series colour on
+   purpose, so the number and its line are tied together without a legend lookup */
+.chart .end-label { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ==========================================================================
+   Legend — present whenever there are two or more series, so identity is
+   never carried by colour alone
+   ========================================================================== */
+
+.legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; }
+.legend-item { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--mc-ink-2); }
+.legend-swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+/* ==========================================================================
+   Tooltip — one node for the whole page, moved around
+   ========================================================================== */
+
+.tip {
+  position: fixed; z-index: 90; pointer-events: none;
+  background: var(--mc-surface); color: var(--mc-ink);
+  border: 1px solid var(--mc-line-2); border-radius: 8px;
+  padding: 9px 11px; font-size: 12.5px; line-height: 1.45;
+  font-family: var(--mc-sans);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .10), 0 10px 28px rgba(0, 0, 0, .14);
+  opacity: 0; transform: translateY(3px); transition: opacity .12s, transform .12s;
+  min-width: 128px;
+}
+.tip.on { opacity: 1; transform: none; }
+.tip .t-head { font-weight: 650; margin-bottom: 5px; }
+.tip .t-row { display: flex; align-items: center; gap: 7px; }
+.tip .t-row + .t-row { margin-top: 3px; }
+.tip .t-sw { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.tip .t-name { color: var(--mc-ink-2); }
+.tip .t-val { margin-left: auto; font-weight: 650; font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tip { transition: none; }
+}
+
+/* ==========================================================================
+   Heatmap
+   ========================================================================== */
+
+.heat-grid { display: grid; grid-template-columns: 34px repeat(var(--mc-heat-cols, 12), 1fr); gap: 3px; align-items: center; }
+.heat-cell { aspect-ratio: 1 / 1; border-radius: 3px; cursor: pointer; transition: outline-color .12s; outline: 2px solid transparent; }
+.heat-cell:hover { outline-color: var(--mc-ink); }
+.heat-lab { font-size: 11px; color: var(--mc-muted); font-variant-numeric: tabular-nums; }
+.heat-scale { display: flex; align-items: center; gap: 7px; margin-top: 12px; font-size: 11.5px; color: var(--mc-muted); }
+.heat-scale .steps { display: flex; gap: 2px; }
+.heat-scale .steps i { width: 17px; height: 9px; border-radius: 2px; display: block; }
+
+/* ==========================================================================
+   Trend rows — small multiples, one sparkline per series
+   ========================================================================== */
+
+.trend { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+/* The sparkline column is the one that gives way, so the row survives a narrow card. */
+.trend-row {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) max-content minmax(34px, 1fr) max-content;
+  align-items: center; gap: 10px;
+  padding: 13px 2px; border-bottom: 1px solid var(--mc-line);
+  font-family: var(--mc-sans);
+}
+.trend-row:last-child { border-bottom: 0; }
+.trend-row.is-derived { border-top: 1px solid var(--mc-line-2); margin-top: 2px; }
+.trend-row .t-key {
+  display: inline-flex; align-items: center; gap: 8px; min-width: 0;
+  font-size: 13.5px; font-weight: 600; color: var(--mc-ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.trend-row .t-key i { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+.trend-row .t-now {
+  font-size: 19px; font-weight: 700; color: var(--mc-ink);
+  font-variant-numeric: tabular-nums; letter-spacing: -.01em;
+}
+.trend-row .t-spark { min-width: 0; }
+.trend-row.is-derived .t-key,
+.trend-row.is-derived .t-now { color: var(--mc-ink-2); }
+
+@media (max-width: 420px) {
+  .trend-row { grid-template-columns: 1fr auto; gap: 4px 10px; }
+  .trend-row .t-spark { grid-column: 1 / -1; }
+}
+
+/* the up/down figure beside a trend row — an arrow as well as a colour,
+   because colour alone is not a signal */
+.delta { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 600; }
+.delta svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2.2; }
+.delta.up { color: var(--mc-good); }
+.delta.down { color: var(--mc-critical); }
+
+/* ==========================================================================
+   Ranked list
+   ========================================================================== */
+
+.ranked { display: flex; flex-direction: column; gap: 13px; font-family: var(--mc-sans); color: var(--mc-ink); }
+.ranked .item { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: baseline; }
+.ranked .name { font-weight: 550; }
+.ranked .val { font-variant-numeric: tabular-nums; font-weight: 650; }
+.ranked .meter { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--mc-wash); overflow: hidden; }
+.ranked .meter span { display: block; height: 100%; border-radius: 3px; }
+/* the quiet second line of a ranked row — units, a par level, where it is stored */
+.ranked .name em { font-style: normal; font-weight: 400; color: var(--mc-muted); margin-left: 8px; font-size: 12px; }

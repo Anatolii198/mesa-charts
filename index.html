@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mesa Charts — eleven chart types, zero dependencies</title>
+<meta name="description" content="A dependency-free SVG chart engine in one file: line, bars, stacked bars, waterfall, timeline, donut, sparkline, scatter, ranked list, trend rows and heatmap.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%232a78d6'/><path d='M7 23l5-7 4 4 9-11' stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="stylesheet" href="mesa-charts.css">
+<style>
+  /* Page chrome only — none of this is part of the library. */
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--page); color:var(--mc-ink);
+    font-family:var(--mc-sans); line-height:1.55;
+    padding:36px 20px 80px;
+  }
+  :root{--page:#f4f4f1; --card-line:var(--mc-line)}
+  :root[data-theme="dark"]{--page:#0d0d0d}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--page:#0d0d0d}}
+
+  .wrap{max-width:1180px; margin:0 auto}
+  header{display:flex; align-items:flex-start; gap:20px; flex-wrap:wrap; margin-bottom:10px}
+  h1{font-size:30px; letter-spacing:-.025em; font-weight:800}
+  .lead{color:var(--mc-ink-2); font-size:15.5px; max-width:640px; margin-top:8px}
+  .lead code{font-family:ui-monospace,monospace; font-size:13.5px; background:var(--mc-wash); padding:2px 6px; border-radius:5px}
+  .top-actions{margin-left:auto; display:flex; gap:10px}
+  button, .btn{
+    font:inherit; font-size:13.5px; font-weight:600; cursor:pointer;
+    background:var(--mc-surface); color:var(--mc-ink); text-decoration:none;
+    border:1px solid var(--card-line); border-radius:9px; padding:9px 14px;
+  }
+  .grid{display:grid; grid-template-columns:repeat(2,1fr); gap:18px; margin-top:26px}
+  .grid .wide{grid-column:1 / -1}
+  @media (max-width:860px){ .grid{grid-template-columns:1fr} }
+
+  .card{
+    background:var(--mc-surface); border:1px solid var(--card-line);
+    border-radius:12px; padding:18px 18px 20px; min-width:0;
+  }
+  .card h2{font-size:15px; font-weight:700; letter-spacing:-.01em}
+  .card p{font-size:12.5px; color:var(--mc-muted); margin:3px 0 14px}
+  .card code{font-family:ui-monospace,monospace; font-size:12px; color:var(--mc-ink-2)}
+  footer{margin-top:40px; font-size:13.5px; color:var(--mc-muted); text-align:center}
+  footer a{color:var(--mc-ink-2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1>Mesa Charts</h1>
+      <div class="lead">Eleven chart types in one file. No dependencies, no build step —
+        open this page from disk and it runs. Every chart below is drawn by
+        <code>mesa-charts.js</code>, redraws on resize and re-reads its colours on theme switch.</div>
+    </div>
+    <div class="top-actions">
+      <button id="theme">Toggle theme</button>
+      <a class="btn" href="https://github.com/Anatolii198/mesa-charts">GitHub</a>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <div class="card wide">
+      <h2>Line &amp; area</h2>
+      <p><code>Mesa.line</code> — zero-based by default; pass <code>zeroBased:false</code> only for averages and rates</p>
+      <div id="c-line"></div>
+    </div>
+
+    <div class="card">
+      <h2>Bars, grouped</h2>
+      <p><code>Mesa.bars</code> — two series side by side</p>
+      <div id="c-bars"></div>
+      <div id="l-bars"></div>
+    </div>
+
+    <div class="card">
+      <h2>Bars, stacked</h2>
+      <p><code>Mesa.bars</code> with <code>stacked:true</code> and share labels</p>
+      <div id="c-stack"></div>
+      <div id="l-stack"></div>
+    </div>
+
+    <div class="card">
+      <h2>Donut</h2>
+      <p><code>Mesa.donut</code> — share labels skipped under 6 %</p>
+      <div id="c-donut"></div>
+      <div id="l-donut"></div>
+    </div>
+
+    <div class="card">
+      <h2>Ranked list</h2>
+      <p><code>Mesa.ranked</code> — HTML bars, each row can carry its own colour</p>
+      <div id="c-ranked"></div>
+    </div>
+
+    <div class="card wide">
+      <h2>Horizontal stacked bars</h2>
+      <p><code>Mesa.barsH</code> — volume and composition at once</p>
+      <div id="c-barsh"></div>
+      <div id="l-barsh"></div>
+    </div>
+
+    <div class="card wide">
+      <h2>Waterfall</h2>
+      <p><code>Mesa.waterfall</code> — start, deltas, total; shows both what each line costs and what is left</p>
+      <div id="c-waterfall"></div>
+    </div>
+
+    <div class="card wide">
+      <h2>Timeline</h2>
+      <p><code>Mesa.timeline</code> — one row per item, a bar between two dates, a marker for today</p>
+      <div id="c-timeline"></div>
+    </div>
+
+    <div class="card">
+      <h2>Scatter</h2>
+      <p><code>Mesa.scatter</code> — quadrants with their own labels</p>
+      <div id="c-scatter"></div>
+    </div>
+
+    <div class="card">
+      <h2>Trend rows</h2>
+      <p><code>Mesa.trendRows</code> — small multiples: each row keeps its own scale</p>
+      <div id="c-trend"></div>
+    </div>
+
+    <div class="card wide">
+      <h2>Heatmap</h2>
+      <p><code>Mesa.heatmap</code> — sequential ramp, single hue, light to dark</p>
+      <div id="c-heat"></div>
+    </div>
+
+    <div class="card">
+      <h2>Sparkline</h2>
+      <p><code>Mesa.spark</code> — no axes, no labels, just the shape</p>
+      <div id="c-spark"></div>
+    </div>
+
+  </div>
+
+  <footer>
+    MIT · built out of the chart engine in
+    <a href="https://github.com/Anatolii198/mesa-lite">Mesa</a>, a restaurant analytics dashboard template
+  </footer>
+</div>
+
+<script src="mesa-charts.js"></script>
+<script>
+/* ---- demo data: a fictional restaurant, nothing real ------------------- */
+const days = Array.from({length: 30}, (_, i) => (i + 1) + ' Sep');
+const revenue = [6800,7250,7900,9100,10300,7400,6900,7100,7600,8400,9900,11200,7800,7000,
+                 7300,7850,8600,10100,11800,8000,7200,7450,8100,9300,10800,12400,8300,7500,
+                 7700,8250];
+
+Mesa.line('#c-line', {
+  labels: days,
+  series: [{ name: 'Revenue', color: '--s1', values: revenue }],
+  currency: '€', height: 280, endLabels: true
+});
+
+Mesa.bars('#c-bars', {
+  labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+  series: [
+    { name: 'This week', color: '--s1', values: [6400,6900,7200,8100,11200,12800,9600] },
+    { name: 'Last week', color: '--s4', values: [6100,6600,7000,7700,10400,12100,9100] }
+  ],
+  currency: '€', height: 250
+});
+Mesa.legend('#l-bars', [
+  { name: 'This week', color: '--s1' }, { name: 'Last week', color: '--s4' }
+]);
+
+Mesa.bars('#c-stack', {
+  labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+  series: [
+    { name: 'Dine-in',  color: '--s1', values: [3600,3900,4100,4700,6400,7300,5500] },
+    { name: 'Delivery', color: '--s2', values: [1900,2100,2200,2400,3300,3800,2800] },
+    { name: 'Takeaway', color: '--s3', values: [ 900, 900, 900,1000,1500,1700,1300] }
+  ],
+  stacked: true, showPercent: true, currency: '€', height: 250
+});
+Mesa.legend('#l-stack', [
+  { name: 'Dine-in', color: '--s1' }, { name: 'Delivery', color: '--s2' }, { name: 'Takeaway', color: '--s3' }
+]);
+
+const split = [
+  { name: 'Card',   color: '--s1', value: 127400 },
+  { name: 'Cash',   color: '--s2', value: 31800 },
+  { name: 'Online', color: '--s3', value: 68300 }
+];
+Mesa.donut('#c-donut', {
+  items: split, currency: '€', height: 230,
+  centerLabel: Mesa.fmt(split.reduce((a, d) => a + d.value, 0), { currency: '€', compact: true }),
+  centerSub: 'this month'
+});
+Mesa.legend('#l-donut', split);
+
+Mesa.ranked('#c-ranked', {
+  currency: '€',
+  items: [
+    { name: 'Truffle tagliatelle', value: 7840 },
+    { name: 'Dry-aged ribeye',     value: 6920 },
+    { name: 'Burrata & peach',     value: 4310 },
+    { name: 'Octopus a la brasa',  value: 3980 },
+    { name: 'Tiramisu',            value: 2640 },
+    { name: 'House negroni',       value: 2180 }
+  ],
+  color: '--s1'
+});
+
+Mesa.barsH('#c-barsh', {
+  labels: ['Dine-in','Delivery','Takeaway'],
+  series: [
+    { name: 'Card',   color: '--s1', values: [86600, 21400, 19400] },
+    { name: 'Cash',   color: '--s2', values: [28300,  1900,  1600] },
+    { name: 'Online', color: '--s3', values: [12500, 45000, 10800] }
+  ],
+  currency: '€', rowH: 30, gap: 18, showTotal: true
+});
+Mesa.legend('#l-barsh', [
+  { name: 'Card', color: '--s1' }, { name: 'Cash', color: '--s2' }, { name: 'Online', color: '--s3' }
+]);
+
+Mesa.waterfall('#c-waterfall', {
+  currency: '€', height: 320,
+  items: [
+    { name: 'Revenue',          type: 'start', value:  227300 },
+    { name: 'Food cost',        type: 'delta', value:  -68200 },
+    { name: 'Labour',           type: 'delta', value:  -61400 },
+    { name: 'Rent',             type: 'delta', value:  -24000 },
+    { name: 'Utilities & other',type: 'delta', value:  -19800 },
+    { name: 'Operating profit', type: 'total', value:   53900 }
+  ]
+});
+
+Mesa.timeline('#c-timeline', {
+  today: '2026-09-30', rowH: 24, gap: 16,
+  items: [
+    /* colour carries status, and the bar's own length carries the rest */
+    { name: 'Walk-in fridge',   from: '2026-08-20', to: '2026-10-05', color: '--s8' },
+    { name: 'Espresso machine', from: '2026-07-12', to: '2026-10-12', color: '--s4' },
+    { name: 'Extraction hood',  from: '2026-05-02', to: '2026-11-02', color: '--s3' },
+    { name: 'Dishwasher',       from: '2026-06-15', to: '2026-12-15', color: '--s3' },
+    { name: 'Fire safety',      from: '2026-03-01', to: '2027-03-01', color: '--s3' }
+  ]
+});
+
+Mesa.scatter('#c-scatter', {
+  height: 300, xLabel: 'Popularity', yLabel: 'Margin %',
+  points: [
+    { name: 'Tagliatelle', x: 86, y: 71, color: '--s3' },
+    { name: 'Ribeye',      x: 64, y: 44, color: '--s1' },
+    { name: 'Burrata',     x: 72, y: 68, color: '--s3' },
+    { name: 'Octopus',     x: 38, y: 62, color: '--s4' },
+    { name: 'Tiramisu',    x: 58, y: 77, color: '--s3' },
+    { name: 'Negroni',     x: 31, y: 39, color: '--s8' },
+    { name: 'Soup',        x: 22, y: 52, color: '--s4' },
+    { name: 'Side salad',  x: 44, y: 28, color: '--s8' }
+  ]
+});
+
+(() => {
+  const dine = [44.1,44.8,45.2,46.0,45.6,46.8,47.2,47.0,48.1,48.6,49.0,49.4];
+  const del  = [28.4,28.9,29.1,29.8,30.2,30.0,30.9,31.4,31.2,32.0,32.4,32.8];
+  const gap  = dine.map((v, i) => +(v - del[i]).toFixed(2));
+  Mesa.trendRows('#c-trend', {
+    currency: '€', decimals: 2,
+    rows: [
+      { name: 'Dine-in',  color: '--s1', values: dine },
+      { name: 'Delivery', color: '--s2', values: del },
+      { name: 'Gap', values: gap, derived: true }
+    ]
+  });
+})();
+
+Mesa.heatmap('#c-heat', {
+  hours: [11,12,13,14,15,16,17,18,19,20,21,22],
+  days: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+  values: [
+    [ 4, 9,14, 7, 5, 6,11,19,24,21,12, 5],
+    [ 5,10,15, 8, 5, 6,12,20,25,22,13, 6],
+    [ 5,11,16, 8, 6, 7,13,22,27,24,14, 6],
+    [ 6,12,18, 9, 6, 8,15,25,31,27,16, 7],
+    [ 8,16,24,12, 9,11,21,35,43,38,24,11],
+    [10,19,29,15,11,13,25,41,50,45,29,14],
+    [ 9,17,25,13, 9,11,20,33,40,35,21, 9]
+  ],
+  unit: 'orders'
+});
+
+Mesa.spark('#c-spark', { values: revenue, color: '--s3', height: 90 });
+
+/* ---- theme switch: the charts re-read their CSS variables -------------- */
+document.querySelector('#theme').addEventListener('click', () => {
+  const root = document.documentElement;
+  const dark = root.getAttribute('data-theme') === 'dark';
+  root.setAttribute('data-theme', dark ? 'light' : 'dark');
+  Mesa.redrawAll();
+});
+</script>
+</body>
+</html>
