@@ -123,7 +123,11 @@ const Mesa = (() => {
       const w = host.clientWidth;
       if (!w) return;
       host.innerHTML = '';
-      host.appendChild(draw(w));
+      const svg = draw(w);
+      host.appendChild(svg);
+      /* Anything that needs real text metrics runs here: getComputedTextLength()
+         only answers once the node is in the document. */
+      if (svg && svg.fitLabels) svg.fitLabels();
     };
     registry.push(render);
     render();
@@ -330,10 +334,10 @@ const Mesa = (() => {
       const bw = Math.min(capW, slot * 0.62);
       const gw = stacked ? bw : bw / series.length;
 
-      /* Share-of-total labels. Dropped automatically when the slot gets too
-         narrow to hold them — a collided label is worse than no label. */
+      /* Share-of-total labels. Which ones survive is decided after mount, by
+         measuring them — see fitLabels below. A collided label is worse than
+         no label. */
       const grand = totals.reduce((a, b) => a + b, 0) || 1;
-      const withPercent = showPercent && slot >= 34;
 
       const svg = el('svg', { class: 'chart', width: W, height: H, viewBox: `0 0 ${W} ${H}` });
 
@@ -343,6 +347,8 @@ const Mesa = (() => {
         t.textContent = fmt(v, { currency, compact, suffix });
         svg.appendChild(t);
       });
+
+      const caps = [];
 
       labels.forEach((lab, i) => {
         const cx = pad.l + slot * i + slot / 2;
@@ -379,11 +385,12 @@ const Mesa = (() => {
           });
         }
 
-        const cap = topLabels ? topLabels[i] : (withPercent ? Math.round((totals[i] / grand) * 100) + '%' : null);
-        if (cap != null && slot >= 34) {
+        const cap = topLabels ? topLabels[i] : (showPercent ? Math.round((totals[i] / grand) * 100) + '%' : null);
+        if (cap != null) {
           const p = el('text', { class: 'value-label', x: cx, y: Y(totals[i]) - 8, 'text-anchor': 'middle' });
           p.textContent = cap;
           svg.appendChild(p);
+          caps.push(p);
         }
 
         const t = el('text', { class: 'tick tick-x', x: cx, y: H - 7 });
@@ -392,6 +399,23 @@ const Mesa = (() => {
       });
 
       svg.appendChild(el('line', { class: 'axis-line', x1: pad.l, x2: W - pad.r, y1: pad.t + ih, y2: pad.t + ih }));
+
+      /* A slot-width threshold only knows how much room there is, not how wide
+         the label came out: a topLabel like "Truffle tagliatelle" clears any
+         threshold and still runs into its neighbour. Once the chart is in the
+         document the browser can measure the text it actually drew, so keep
+         what fits and drop the rest. */
+      svg.fitLabels = () => {
+        caps.forEach(p => {
+          const tw = p.getComputedTextLength ? p.getComputedTextLength() : 0;
+          /* tw === 0 means the browser could not measure — no layout yet, or a
+             renderer without the API. Fall back to the old slot test rather
+             than keep a label blindly. */
+          const fits = tw ? tw <= slot - 6 : slot >= 34;
+          if (!fits) p.remove();
+        });
+      };
+
       return svg;
     });
   }
